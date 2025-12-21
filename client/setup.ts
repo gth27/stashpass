@@ -117,6 +117,12 @@ async function main() {
         options: { showObjectChanges: true, showEffects: true }
     });
 
+    if (buyResult.effects?.status.status !== 'success') {
+        console.error("❌ BUY TRANSACTION FAILED!");
+        console.error("Reason:", buyResult.effects?.status.error);
+        return;
+    }
+
     const ticketId = buyResult.objectChanges?.find(
         (o) => o.type === 'created' && o.objectType.includes('::Ticket')
     )?.objectId;
