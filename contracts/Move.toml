@@ -1,0 +1,11 @@
+[package]
+name = "stashpass"
+version = "0.0.1"
+edition = "2024.beta"
+
+[dependencies]
+# SECURITY FIX: Pinned to the v1.62.0 release commit
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "74e8414" }
+
+[addresses]
+stashpass = "0x0"
