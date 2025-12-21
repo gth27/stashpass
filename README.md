@@ -22,15 +22,25 @@ cd client && npm install
 cd ../contracts && npm install
 ```
 
-### Bước 2: Thiết lập Environment
+### Bước 2: Thiết lập biến môi trường
 
-Ứng dụng sử dụng biến môi trường để xác định contract đã deploy.
+Ứng dụng sử dụng các biến môi trường để tìm hợp đồng và đối tượng Ticket Machine.
 
-1. Trong thư mục `client/`, tạo file `.env`
-2. Thêm Package ID (sẽ được gửi riêng):
+1. Trong folder `client/`, tạo file tên `.env`.
+2. Thêm các ID sau (sẽ gửi riêng):
 
-```
-PACKAGE_ID=0x_YOUR_DEPLOYED_PACKAGE_ID_HERE
+```env
+# Network (mặc định là testnet)
+SUI_NETWORK=testnet
+
+# Package ID của hợp đồng Move đã triển khai
+SUI_PACKAGE_ID=0x...
+
+# ID của đối tượng Ticket Machine dùng chung
+SUI_TICKET_MACHINE_ID=0x...
+
+# (Không bắt buộc) Private key cho scanner/backend test
+SUI_PRIVATE_KEY=suiprivkey...
 ```
 
 ## 3. Làm việc với Smart Contract
