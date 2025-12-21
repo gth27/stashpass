@@ -25,7 +25,7 @@ cd client && npm install
 
 ### Bước 2: Cấu hình Môi trường (.env)
 
-Tạo file `.env` trong thư mục `client/` và điền các thông tin cấu hình (Lấy từ file hướng dẫn bàn giao hoặc Discord của team):
+Tạo file `.env` trong thư mục `client/` và điền các thông tin cấu hình (Nhắn riêng):
 
 ```env
 # Mạng lưới (Testnet)
