@@ -1,91 +1,107 @@
-# Stashpass – Tài liệu Bàn giao Dự án
+# StashPass – Hệ Thống Vé Sự Kiện Phi Tập Trung
 
-Repository này bao gồm **smart contract Sui Move** và **logic client viết bằng TypeScript** cho ứng dụng phát hành vé on-chain.
+Repository này chứa **smart contract Sui Move** (Backend) và các công cụ giả lập Client (Frontend/Scanner) cho ứng dụng phát hành vé on-chain StashPass.
+
+Dự án sử dụng mô hình **Factory Pattern**, cho phép bất kỳ ai cũng có thể tạo sự kiện riêng, phát hành vé và quản lý cổng soát vé (Booth) của mình.
 
 ## 1. Cấu trúc Dự án
 
-* **/contracts**: Mã nguồn Sui Move và các bài test.
-* **/client**: Logic scanner và cấu hình mạng viết bằng TypeScript.
-* **.gitignore**: Đã cấu hình để bỏ qua `build/`, `node_modules/` và file `.env`.
+* **/contracts**: Mã nguồn Sui Move (V2 - Factory Edition).
+* **/client**: Mã nguồn TypeScript để tương tác với blockchain.
+    * `setup.ts`: **(Mới)** Script giả lập toàn bộ luồng: Tạo sự kiện -> Mua vé -> Tạo Booth.
+    * `scanner.ts`: Ứng dụng soát vé dành cho nhân viên (Staff).
+    * `index.ts`: Công cụ xem chi tiết vé (Ticket Viewer).
+    * `config.ts`: Quản lý cấu hình mạng và biến môi trường.
 
-## 2. Bắt đầu (Cài đặt)
+## 2. Cài đặt & Bắt đầu
 
 ### Bước 1: Cài đặt Dependencies
 
-Cần cài Node modules cho cả hai thư mục chính:
-
 ```bash
-# Cài dependencies cho client
+# Cài đặt cho client
 cd client && npm install
 
-# Cài dependencies cho contracts (nếu chạy test JS)
-cd ../contracts && npm install
 ```
 
-### Bước 2: Thiết lập biến môi trường
+### Bước 2: Cấu hình Môi trường (.env)
 
-Ứng dụng sử dụng các biến môi trường để tìm hợp đồng và đối tượng Ticket Machine.
-
-1. Trong folder `client/`, tạo file tên `.env`.
-2. Thêm các ID sau (sẽ gửi riêng):
+Tạo file `.env` trong thư mục `client/` và điền các thông tin cấu hình (Nhắn riêng):
 
 ```env
-# Network (mặc định là testnet)
+# Mạng lưới (Testnet)
 SUI_NETWORK=testnet
 
-# Package ID của hợp đồng Move đã triển khai
-SUI_PACKAGE_ID=0x...
+# 1. Địa chỉ Contract (Package ID)
+SUI_PACKAGE_ID=0x94436468e63898d357da62908afd46698156fd6b9a3cf849e40983bc3f5c56bc
 
-# ID của đối tượng Ticket Machine dùng chung
-SUI_TICKET_MACHINE_ID=0x...
+# 2. Kho bạc giao thức (Nơi nhận phí 1%)
+SUI_PROTOCOL_TREASURY_ID=0x95f8a9de71689f1bce56cfe9c3161f634ef89a612e255fe41a5003dfb20d3c0a
 
-# (Không bắt buộc) Private key cho scanner/backend test
+# 3. Private Key (Chỉ dùng cho Admin/Dev để chạy script test)
+# Hỗ trợ định dạng: 'suiprivkey...', '0x...', hoặc Base64
 SUI_PRIVATE_KEY=suiprivkey...
+
 ```
 
-## 3. Làm việc với Smart Contract
+---
 
-Yêu cầu đã cài **Sui CLI**:
+## 3. Hướng dẫn Sử dụng (Client Scripts)
 
-* **Build contract**
+Chúng tôi đã chuẩn bị sẵn các script để giả lập các vai trò người dùng khác nhau:
 
-  ```bash
-  cd contracts && sui move build
-  ```
+### A. Vai trò: Organizer & User (Giả lập luồng chính)
 
-* **Chạy test**
+Chạy script này để khởi tạo một sự kiện mới, tự mua một vé và tạo cổng soát vé. Đây là cách nhanh nhất để lấy các ID mới cho Frontend test.
 
-  ```bash
-  sui move test
-  ```
+```bash
+cd client
+npx ts-node setup.ts
 
-* **Deploy**
+```
 
-  ```bash
-  sui client publish --gas-budget 100000000
-  ```
+*Output sẽ cung cấp: `Machine ID` (Sự kiện), `Ticket ID` (Vé mẫu), và `Booth ID` (Cổng soát vé).*
 
-## 4. Làm việc với Client
+### B. Vai trò: Nhân viên soát vé
 
-* **Scanner:** Logic theo dõi / xử lý nằm trong `client/scanner.ts`
-* **Cấu hình:** Thiết lập mạng và environment trong `client/config.ts`
-* **Chạy ứng dụng:**
+Giả lập việc nhân viên sử dụng camera để quét mã QR của khách.
 
-  ```bash
-  npm start
-  ```
+1. Mở `client/scanner.ts`.
+2. Cập nhật `TICKET_TO_SCAN` bằng ID vé bạn vừa mua được từ bước setup.
+3. Chạy lệnh:
 
-  hoặc
+```bash
+npx ts-node scanner.ts
 
-  ```bash
-  ts-node index.ts
-  ```
+```
 
-  (chạy trong thư mục `client/`)
+### AB. Vai trò: Kiểm tra vé
+
+Xem chi tiết metadata của vé và lịch sử đóng dấu (Badges).
+
+1. Mở `client/index.ts`.
+2. Cập nhật `TICKET_ID`.
+3. Chạy lệnh:
+
+```bash
+npx ts-node index.ts
+
+```
+
+---
+
+## 4. Thông tin Smart Contract
+
+* **Ngôn ngữ:** Sui Move
+* **Mạng:** Testnet
+* **Tính năng chính:**
+* `create_event(price)`: Tạo máy bán vé (TicketMachine) và quyền quản trị (OrganizerCap).
+* `buy_ticket(machine, treasury, coin)`: Mua vé. Phí 1% chuyển về Treasury, còn lại chuyển vào Machine.
+* `create_booth(org_cap, name)`: Tạo quyền soát vé (BoothCap) cho nhân viên.
+* `stamp_ticket(booth_cap, ticket)`: Đóng dấu tham dự lên vé (On-chain Verification).
+
+
 
 ## 5. Lưu ý Quan trọng
 
-* **KHÔNG** commit file `.env` (đã được ignore nhưng vẫn cần cẩn trọng).
-* **KHÔNG** commit thư mục `build/` trong `contracts`; thư mục này sẽ được tạo lại khi build.
-* **Ví (Wallet):** Frontend cần sử dụng **Sui Wallet Adapter**.
-  `PACKAGE_ID` trong `.env` xác định contract mà ứng dụng sẽ tương tác.
+* **Bảo mật:** Không bao giờ commit file `.env` lên GitHub.
+* **Frontend:** Team Frontend chỉ cần quan tâm đến `PACKAGE_ID`, `TREASURY_ID` và `Machine ID` (để test nút mua vé). Không cần dùng Private Key.
