@@ -5,7 +5,7 @@ const client = new SuiClient({
 	url: getFullnodeUrl('testnet'),
 });
 
-const TICKET_ID = '0x5407996118fe98580aec08e80e240e51ec6ff1b7498203fda87a92e3c5d35a5a';
+const TICKET_ID = '0x247fb5808d83ac3ab569d777fb5a9c1cc8f8eca457af503e96bf91b5f008e8fc';
 
 async function main() {
 	console.log('🔍 Fetching Ticket Data...');
