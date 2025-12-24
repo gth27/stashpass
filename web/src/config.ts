@@ -1,18 +1,17 @@
-import { getFullnodeUrl } from "@mysten/sui.js/client";
+import { getFullnodeUrl } from "@mysten/sui/client";
+import deployment from './deployment.json';
 
 export const CONFIG = {
-  NETWORK: 'testnet',
-  RPC_URL: getFullnodeUrl('testnet'),
+  NETWORK: deployment.NETWORK,
+  RPC_URL: getFullnodeUrl(deployment.NETWORK as "testnet" | "mainnet"),
+  PACKAGE_ID: deployment.PACKAGE_ID,
+  TEST_EVENT_ID: deployment.TEST_EVENT_ID,
   
-  // Package ID
-  PACKAGE_ID: '0xd847b4aa993d7e027ace4351f7467037313966156e499829e167e2ef1ae48da2',
+  REWARD_CONFIG_ID: (deployment as any).REWARD_CONFIG_ID, 
   
-  // Machine ID
-  TEST_EVENT_ID: '0x34ebf78c94269680742bdd75b83ac04f37a2cfb78fa85fdd1ac49915eabe83f6',
-  
-  // Standard treasury
-  TREASURY_ID: '0x95f8a9de71689f1bce56cfe9c3161f634ef89a612e255fe41a5003dfb20d3c0a' 
+  TREASURY_ID: deployment.TREASURY_ID,
+  DEMO_BOOTH_ID: deployment.DEMO_BOOTH_ID,
+  TYPES: {
+      BOOTH_CAP: `${deployment.PACKAGE_ID}::event_manager::BoothCap`
+  }
 };
-
-
-

@@ -1,0 +1,22 @@
+{
+  "NETWORK": "testnet",
+  "PACKAGE_ID": "0xc16397af90330b1549898ebeb7b3c7bbbab2beaa6e5b594aa8696fd0de8fd93b",
+  "TEST_EVENT_ID": "0x6b0da74c72e7a588926ffe2a4897aee900af651a4ba08a3e653e93c597b3785b",
+  "REWARD_CONFIG_ID": "0xdcff1bf0af5fdf995db37b0f2c2979a1126615c8999ae8c02bec9bc66483dbe9",
+  "TREASURY_ID": "0x95f8a9de71689f1bce56cfe9c3161f634ef89a612e255fe41a5003dfb20d3c0a",
+  "DEMO_BOOTH_ID": "0xb958df41129b6a8edafe146b216a10deaa0cd3897fc2bf7dd27c33b0c5e25d00",
+  "ALL_BOOTHS": [
+    {
+      "name": "Main Gate",
+      "id": "0xb958df41129b6a8edafe146b216a10deaa0cd3897fc2bf7dd27c33b0c5e25d00"
+    },
+    {
+      "name": "Merch Stand",
+      "id": "0xd2f8f58adb59a6490f1aa3815af1947670e7b73fae847a4c3b38883fb7756550"
+    },
+    {
+      "name": "Tournament Champion",
+      "id": "0xed149cd08f8625b6512dd6029d1fdbd1c231fbb85f6fcc493788a8fe4202b9d4"
+    }
+  ]
+}

@@ -1,147 +1,199 @@
+import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { SuiClient, getFullnodeUrl } from '@mysten/sui.js/client';
 import { Ed25519Keypair } from '@mysten/sui.js/keypairs/ed25519';
-import { TransactionBlock } from '@mysten/sui.js/transactions';
 import { fromB64 } from '@mysten/sui.js/utils';
-import { CONFIG } from './config.ts';
-import * as dotenv from 'dotenv';
+import { decodeSuiPrivateKey } from '@mysten/sui.js/cryptography';
+import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// 1. Load Local .env (admin-scripts/.env)
 dotenv.config();
 
-// Utility: Hàm chờ (Sleep) để tránh lỗi mạng chưa kịp index object
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+// ⚠️ REPLACE WITH YOUR NEW PACKAGE ID IF NEEDED
+const PACKAGE_ID = '0xc16397af90330b1549898ebeb7b3c7bbbab2beaa6e5b594aa8696fd0de8fd93b'; 
+const TREASURY_ID = '0x95f8a9de71689f1bce56cfe9c3161f634ef89a612e255fe41a5003dfb20d3c0a';
 
-// --- 1. SETUP KEYPAIR ---
-const getSigner = () => {
-    const privKey = process.env.SUI_PRIVATE_KEY;
-    if (!privKey) throw new Error("Missing SUI_PRIVATE_KEY in .env");
-
-    let secretKey = fromB64(privKey);
-    if (secretKey.length === 33) {
-        secretKey = secretKey.slice(1);
-    }
-    return Ed25519Keypair.fromSecretKey(secretKey);
-};
-
-const keypair = getSigner();
 const client = new SuiClient({ url: getFullnodeUrl('testnet') });
 
-async function main() {
-    console.log(`👤 Validated Identity: ${keypair.toSuiAddress()}`);
-    console.log(`📦 Using Package: ${CONFIG.PACKAGE_ID}`);
+// Sanitize the key
+let RAW_KEY = process.env.SUI_PRIVATE_KEY || process.env.PRIVATE_KEY;
+if (!RAW_KEY) { 
+    console.error("❌ Missing SUI_PRIVATE_KEY in environment."); 
+    process.exit(1); 
+}
+const PRIVATE_KEY = RAW_KEY.trim();
 
-    // --- STEP 1: CREATE EVENT ---
-    console.log("\n1️⃣  Creating a new Event...");
-    const tx1 = new TransactionBlock();
-    const TICKET_PRICE = 100000000; // 1 SUI
-
-    tx1.moveCall({
-        target: `${CONFIG.PACKAGE_ID}::event_manager::create_event`,
-        arguments: [tx1.pure(TICKET_PRICE)],
-    });
-
-    const res1 = await client.signAndExecuteTransactionBlock({
-        signer: keypair,
-        transactionBlock: tx1,
-        options: { showObjectChanges: true, showEffects: true }
-    });
-
-    if (res1.effects?.status.status !== 'success') {
-        console.error("❌ Create Event Failed:", res1.effects?.status.error);
-        return;
-    }
-
-    const machineId = res1.objectChanges?.find((obj: any) => 
-        (obj.type === 'created' || obj.type === 'mutated') && 
-        obj.objectType?.includes('TicketMachine')
-    )?.objectId;
-
-    const orgCapId = res1.objectChanges?.find((obj: any) => 
-        (obj.type === 'created' || obj.type === 'mutated') && 
-        obj.objectType?.includes('OrganizerCap')
-    )?.objectId;
-
-    if (!machineId || !orgCapId) {
-        console.error("❌ Failed to find created objects. Dumping changes:");
-        console.log(JSON.stringify(res1.objectChanges, null, 2));
-        return;
-    }
-
-    console.log("✅ Event Created!");
-    console.log(`   Machine ID: ${machineId}`);
-    console.log(`   Org Cap ID: ${orgCapId}`);
-
-    // 🕒 WAITING: Chờ 5 giây để mạng Testnet kịp nhận diện object mới
-    console.log("⏳ Waiting 5s for network indexing...");
-    await sleep(5000);
-
-    // --- STEP 2: BUY TICKET ---
-    console.log("\n2️⃣  Buying a Ticket...");
-    const tx2 = new TransactionBlock();
-    
-    // Tách tiền lẻ để trả đúng giá vé
-    const [payment] = tx2.splitCoins(tx2.gas, [tx2.pure(TICKET_PRICE)]);
-
-    tx2.moveCall({
-        target: `${CONFIG.PACKAGE_ID}::event_manager::buy_ticket`,
-        arguments: [
-            tx2.object(machineId), // ID Máy bán vé
-            payment // Tiền trả
-        ],
-    });
-
-    const res2 = await client.signAndExecuteTransactionBlock({
-        signer: keypair,
-        transactionBlock: tx2,
-        options: { showObjectChanges: true, showEffects: true }
-    });
-
-    if (res2.effects?.status.status !== 'success') {
-        console.error("❌ Buy Ticket Failed:", res2.effects?.status.error);
-        return;
-    }
-
-    const ticketId = res2.objectChanges?.find((obj: any) => 
-        (obj.type === 'created' || obj.type === 'mutated') && 
-        obj.objectType?.includes('Ticket') && 
-        !obj.objectType?.includes('TicketMachine')
-    )?.objectId;
-
-    console.log("✅ Ticket Purchased!");
-    console.log(`   Ticket ID: ${ticketId}`);
-
-    // --- STEP 3: CREATE BOOTH ---
-    console.log("\n3️⃣  Creating Booth (Badge)...");
-    const tx3 = new TransactionBlock();
-    const BOOTH_NAME = "VIP Gate";
-
-    tx3.moveCall({
-        target: `${CONFIG.PACKAGE_ID}::event_manager::create_booth`,
-        arguments: [
-            tx3.object(orgCapId),
-            tx3.pure(BOOTH_NAME)
-        ],
-    });
-
-    const res3 = await client.signAndExecuteTransactionBlock({
-        signer: keypair,
-        transactionBlock: tx3,
-        options: { showObjectChanges: true, showEffects: true }
-    });
-
-    const boothCapId = res3.objectChanges?.find((obj: any) => 
-        (obj.type === 'created' || obj.type === 'mutated') && 
-        obj.objectType?.includes('BoothCap')
-    )?.objectId;
-
-    console.log("✅ Booth Created!");
-    console.log(`   Booth ID: ${boothCapId}`);
-
-    console.log("\n🎉 SETUP COMPLETE!");
-    console.log("-----------------------------------------");
-    console.log("Gửi các ID này cho Frontend Teammate:");
-    console.log(`EVENT_MACHINE_ID: '${machineId}'`);
-    console.log(`TEST_TICKET_ID: '${ticketId}'`);
-    console.log("-----------------------------------------");
+// Debug Key Length (Safety Check)
+console.log(`🔑 Key found: ${PRIVATE_KEY.substring(0, 12)}... (Total Length: ${PRIVATE_KEY.length})`);
+if (PRIVATE_KEY.startsWith('suiprivkey') && PRIVATE_KEY.length < 60) {
+    console.warn("⚠️  WARNING: Your key seems too short for a Bech32 key. Check your .env file!");
 }
 
-main().catch(console.error);
+// --- KEY HANDLING LOGIC ---
+let keypair: Ed25519Keypair;
+try {
+    if (PRIVATE_KEY.startsWith('suiprivkey')) {
+        // Handle Bech32 format
+        const { secretKey } = decodeSuiPrivateKey(PRIVATE_KEY);
+        keypair = Ed25519Keypair.fromSecretKey(secretKey);
+    } else {
+        // Handle Base64 format
+        keypair = Ed25519Keypair.fromSecretKey(fromB64(PRIVATE_KEY).slice(0, 32));
+    }
+} catch (e: any) {
+    console.error("\n❌ Failed to parse Private Key.");
+    if (e.message && e.message.includes("Data too short")) {
+        console.error("👉 CAUSE: The key string in your .env file is truncated/incomplete.");
+        console.error("👉 FIX: Re-export the private key from your wallet and paste the FULL string.");
+    } else {
+        console.error("Error details:", e.message);
+    }
+    process.exit(1);
+}
+
+const deployerAddress = keypair.getPublicKey().toSuiAddress();
+console.log(`🚀 Running Setup with Account: ${deployerAddress}`);
+
+async function main() {
+  try {
+    // --- STEP 1: CREATE EVENT ---
+    console.log("\n1️⃣  Creating Event Machine & Config...");
+    const tx = new TransactionBlock();
+    
+    // create_event(price, ctx)
+    tx.moveCall({
+      target: `${PACKAGE_ID}::event_manager::create_event`,
+      arguments: [tx.pure(100000000)] // 0.1 SUI
+    });
+
+    const result = await client.signAndExecuteTransactionBlock({
+      signer: keypair,
+      transactionBlock: tx,
+      options: { showObjectChanges: true }
+    });
+
+    // Find the objects
+    const machineId = result.objectChanges?.find(o => o.type === 'created' && o.objectType.includes('::TicketMachine'))?.objectId;
+    const configId = result.objectChanges?.find(o => o.type === 'created' && o.objectType.includes('::RewardConfig'))?.objectId;
+    const capId = result.objectChanges?.find(o => o.type === 'created' && o.objectType.includes('::OrganizerCap'))?.objectId;
+
+    if (!machineId || !configId || !capId) {
+        throw new Error("❌ Failed to find created objects. Check Package ID.");
+    }
+    console.log(`✅ Event Created! \n   Machine: ${machineId}\n   Config: ${configId}\n   Cap: ${capId}`);
+
+    // --- STEP 2: SETUP REWARDS ---
+    console.log("\n2️⃣  Setting up Rewards...");
+    const txRewards = new TransactionBlock();
+    
+    // Reward 1
+    txRewards.moveCall({
+        target: `${PACKAGE_ID}::event_manager::update_reward_rule`,
+        arguments: [
+            txRewards.object(capId),
+            txRewards.object(configId),
+            txRewards.pure("Main Gate"),
+            txRewards.pure("Early Bird Access"),
+            txRewards.pure("https://api.dicebear.com/9.x/shapes/svg?seed=Gate&backgroundColor=2ecc71")
+        ]
+    });
+
+    // Reward 2
+    txRewards.moveCall({
+        target: `${PACKAGE_ID}::event_manager::update_reward_rule`,
+        arguments: [
+            txRewards.object(capId),
+            txRewards.object(configId),
+            txRewards.pure("Merch Stand"),
+            txRewards.pure("10% Off Discount"),
+            txRewards.pure("https://api.dicebear.com/9.x/shapes/svg?seed=Merch&backgroundColor=3498db")
+        ]
+    });
+
+    // Reward 3
+    txRewards.moveCall({
+        target: `${PACKAGE_ID}::event_manager::update_reward_rule`,
+        arguments: [
+            txRewards.object(capId),
+            txRewards.object(configId),
+            txRewards.pure("Tournament Champion"),
+            txRewards.pure("Grand Prize Entry"),
+            txRewards.pure("https://api.dicebear.com/9.x/shapes/svg?seed=Trophy&backgroundColor=f1c40f")
+        ]
+    });
+
+    await client.signAndExecuteTransactionBlock({ signer: keypair, transactionBlock: txRewards });
+    console.log("✅ Rewards Configured.");
+
+    // --- STEP 3: CREATE SHARED BOOTHS ---
+    const boothNames = ["Main Gate", "Merch Stand", "Tournament Champion"];
+    console.log(`\n3️⃣  Creating ${boothNames.length} Shared Booths...`);
+    
+    const txBooths = new TransactionBlock();
+    
+    boothNames.forEach(name => {
+      txBooths.moveCall({
+        target: `${PACKAGE_ID}::event_manager::create_booth`,
+        arguments: [ 
+            txBooths.object(capId), 
+            txBooths.pure(name),
+            txBooths.pure(true)
+        ]
+      });
+    });
+    
+    const resultBooths = await client.signAndExecuteTransactionBlock({
+        signer: keypair,
+        transactionBlock: txBooths,
+        options: { showObjectChanges: true }
+    });
+
+    const createdBooths: { name: string, id: string }[] = [];
+    let bIdx = 0;
+    
+    resultBooths.objectChanges?.forEach((o) => {
+        // Look for '::Booth' (Shared Object)
+        if (o.type === 'created' && o.objectType.includes('::Booth')) {
+            if (bIdx < boothNames.length) {
+                createdBooths.push({ name: boothNames[bIdx], id: o.objectId });
+                bIdx++;
+            }
+        }
+    });
+
+    console.log(`✅ ${createdBooths.length} Booths Created & Shared`);
+
+    // --- STEP 4: WRITE TO FRONTEND CONFIG ---
+    const deploymentConfig = {
+      NETWORK: "testnet",
+      PACKAGE_ID: PACKAGE_ID,
+      TEST_EVENT_ID: machineId,
+      REWARD_CONFIG_ID: configId, 
+      TREASURY_ID: TREASURY_ID,
+      DEMO_BOOTH_ID: createdBooths.length > 0 ? createdBooths[0].id : "",
+      ALL_BOOTHS: createdBooths
+    };
+
+    const frontendPath = path.resolve(__dirname, '../web/src/deployment.json');
+    
+    // Ensure directory exists
+    const dir = path.dirname(frontendPath);
+    if (!fs.existsSync(dir)){
+        fs.mkdirSync(dir, { recursive: true });
+    }
+
+    fs.writeFileSync(frontendPath, JSON.stringify(deploymentConfig, null, 2));
+    console.log(`\n📄 Config written to: ${frontendPath}`);
+    console.log("👉 If your web app is running, it should update automatically.");
+
+  } catch (e) {
+    console.error("❌ Setup Failed:", e);
+  }
+}
+
+main();

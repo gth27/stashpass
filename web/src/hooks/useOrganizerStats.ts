@@ -2,29 +2,36 @@ import { useSuiClientQuery } from '@mysten/dapp-kit';
 import { CONFIG } from '../config';
 
 export function useOrganizerStats() {
-  // Fetch the TicketMachine Object to see the Balance
   const { data, refetch } = useSuiClientQuery(
     'getObject',
     {
       id: CONFIG.TEST_EVENT_ID,
       options: { showContent: true }
     },
-    { refetchInterval: 5000 } // Auto-refresh every 5 seconds (Live Dashboard!)
+    { refetchInterval: 3000 }
   );
 
   const stats = (() => {
     if (!data || !data.data || !data.data.content) return null;
     
-    // Parse the Move Struct
     const fields = (data.data.content as any).fields;
     
-    const price = Number(fields.price);
-    const balance = Number(fields.balance); // The SUI inside the machine
-    
+    // Safety check for strings vs numbers from RPC
+    const priceRaw = Number(fields.price);
+    const balanceRaw = Number(fields.balance?.fields?.value || fields.balance || 0);
+
+    // 1% Fee Logic: Organizer gets 99%
+    const organizerSharePerTicket = priceRaw * 0.99;
+
+    const ticketsSold = organizerSharePerTicket > 0 
+        ? Math.floor(balanceRaw / organizerSharePerTicket) 
+        : 0;
+
     return {
-      ticketPrice: price / 1_000_000_000, // Convert MIST to SUI
-      totalRevenue: balance / 1_000_000_000, // Convert MIST to SUI
-      ticketsSold: Math.floor(balance / price) // Calculate count based on money
+      ticketPrice: priceRaw / 1_000_000_000, 
+      // This must match what Admin.tsx expects
+      organizerRevenue: balanceRaw / 1_000_000_000, 
+      ticketsSold: ticketsSold 
     };
   })();
 

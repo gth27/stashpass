@@ -5,7 +5,7 @@ const client = new SuiClient({
 	url: getFullnodeUrl('testnet'),
 });
 
-const TICKET_ID = '0x247fb5808d83ac3ab569d777fb5a9c1cc8f8eca457af503e96bf91b5f008e8fc';
+const TICKET_ID = 'YOUR_TICKET_ID_HERE';
 
 async function main() {
 	console.log('🔍 Fetching Ticket Data...');
@@ -19,9 +19,7 @@ async function main() {
 	});
 
 	// Parse the Data
-	if (
-		objectResponse.data?.content?.dataType !== 'moveObject'
-	) {
+	if (objectResponse.data?.content?.dataType !== 'moveObject') {
 		console.error('❌ Error: Object not found or wrong type.');
 		return;
 	}
@@ -29,8 +27,8 @@ async function main() {
 	const fields = objectResponse.data.content.fields as any;
 
 	console.log('✅ Ticket Found!');
-	console.log(`🎫 Event: ${fields.name}`);
-	console.log(`xm Description: ${fields.description}`);
+	console.log(`🎫 Name: ${fields.name}`);
+	console.log(`🔗 Image URL: ${fields.url}`);
 	console.log('---------------------------------------------------');
 	console.log('📛 BADGES COLLECTED:');
 
@@ -38,9 +36,9 @@ async function main() {
 	if (fields.badges.length === 0) {
 		console.log('   (No badges yet)');
 	} else {
-		fields.badges.forEach((badge: any) => {
-			const date = new Date(Number(badge.fields.timestamp));
-			console.log(`   - [${badge.fields.name}] (Stamped at: ${date.toLocaleString()})`);
+        // FIXED: Badges are now simple strings
+		fields.badges.forEach((badgeName: string, index: number) => {
+			console.log(`   - [${index + 1}] ${badgeName}`);
 		});
 	}
 	console.log('---------------------------------------------------');

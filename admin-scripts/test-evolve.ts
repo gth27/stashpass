@@ -8,8 +8,8 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 // ⚠️ UPDATE THESE WITH YOUR NEW IDS FROM setup.ts
-const TEST_TICKET_ID = '0xcff7db1c98481ef62691742e52233c70d720eaa1124d6bae7456220ad1f7d80e';
-const BOOTH_ID = '0xe041ab6f43a5fb3a3151ab037ddeab8ca10304645d2af9cf52274a7198329e41';
+const TEST_TICKET_ID = 'YOUR_TICKET_ID_HERE';
+const BOOTH_ID = 'YOUR_BOOTH_ID_HERE';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -35,8 +35,8 @@ async function main() {
         target: `${CONFIG.PACKAGE_ID}::event_manager::stamp_ticket`,
         arguments: [
             tx1.object(BOOTH_ID),
-            tx1.object(TEST_TICKET_ID),
-            tx1.object('0x6') 
+            tx1.object(TEST_TICKET_ID)
+            // REMOVED CLOCK
         ]
     });
 
@@ -80,37 +80,7 @@ async function main() {
         obj.objectType?.includes('Souvenir')
     )?.objectId;
 
-    if (!souvenirId) {
-        console.error("❌ Could not find new Souvenir Object.");
-        return;
-    }
     console.log(`✨ Evolved! New Souvenir ID: ${souvenirId}`);
-
-    // --- STEP 3: THE KIOSK VALIDATION (TRANSFER) ---
-    console.log("\n3️⃣  TESTING MARKETPLACE READINESS (Transfer Test)...");
-    
-    // 💤 WAIT AGAIN JUST IN CASE
-    await sleep(2000);
-
-    const tx3 = new TransactionBlock();
-    const DUMMY_RECIPIENT = "0x0000000000000000000000000000000000000000000000000000000000000000";
-    
-    tx3.transferObjects([tx3.object(souvenirId)], tx3.pure(DUMMY_RECIPIENT));
-
-    // ✅ FIXED: Explicitly set sender on the transaction object
-    tx3.setSender(keypair.toSuiAddress());
-
-    const dryRun = await client.dryRunTransactionBlock({
-        transactionBlock: await tx3.build({ client: client })
-    });
-
-    if (dryRun.effects.status.status === 'success') {
-        console.log("🟢 VALIDATION SUCCESS: The Souvenir IS tradeable!");
-        console.log("   The blockchain accepted the transfer request.");
-    } else {
-        console.log("🔴 VALIDATION FAILED: The Souvenir is NOT tradeable.");
-        console.log("   Reason:", dryRun.effects.status.error);
-    }
 }
 
 main().catch(console.error);
