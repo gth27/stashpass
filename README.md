@@ -1,43 +1,46 @@
-# StashPass – Hệ Thống Vé Sự Kiện "Living Asset" trên Sui
-
-Repository này chứa toàn bộ mã nguồn của dự án **StashPass**:
-
-1. **Smart Contract (Backend):** Viết bằng Sui Move, sử dụng mô hình **Shared Objects** để tối ưu hóa khả năng mở rộng.
-2. **Web Frontend:** Ứng dụng React/Vite kết nối ví, phục vụ Admin, Nhân viên (Staff) và Người dùng (User).
-3. **Admin Scripts:** Bộ công cụ TypeScript để deploy, cài đặt metadata và kiểm thử nhanh.
-
-## Tính năng Nổi bật
-
-* **Soulbound Tickets:** Vé vào cửa gắn liền với ví (không thể chuyển nhượng/bán lại), chống vé chợ đen (Scalping).
-* **Dynamic Evolution:** Vé "tiến hóa" metadata theo thời gian thực khi người dùng tham gia các hoạt động (quét mã tại Booth).
-* **Shared Object Booths:** Cổng soát vé là đối tượng chia sẻ, cho phép hàng nghìn người check-in cùng lúc mà không tắc nghẽn.
-* **Burn-to-Mint:** Đốt vé đã hoàn thành nhiệm vụ để đổi lấy **Souvenir NFT** (có thể giao dịch) và nhận đặc quyền.
-* **Staff Dashboard:** Tự động đồng bộ hóa các Booth từ blockchain mà không cần cấu hình thủ công.
-
----
-
-## 1. Cấu trúc Dự án
-
-* `contracts/`: Mã nguồn Sui Move.
-* `stashpass.move`: Module chính quản lý sự kiện, vé và booth.
 
 
-* `web/`: Giao diện người dùng (React + Vite + dApp Kit).
-* `admin-scripts/`: Công cụ dành cho Deployer/Admin.
-* `setup.ts`: Khởi tạo Sự kiện, tạo Booth và **tự động ghi file cấu hình cho Frontend**.
-* `setup-display.ts`: Cài đặt hiển thị hình ảnh NFT (Sui Object Display).
-* `make-me-admin.ts`: Chuyển quyền Admin (OrganizerCap) cho ví khác.
-* `test-evolve.ts`, `test-refund.ts`: Các script kiểm thử luồng nghiệp vụ.
+# StashPass – "Living Asset" Event Ticketing System on Sui
 
 
+This repository contains the complete source code for the **StashPass** project:
+
+1. **Smart Contract (Backend):** Written in Sui Move, utilizing the **Shared Objects** model to optimize scalability.
+2. **Web Frontend:** A React/Vite application that connects wallets and serves Admins, Staff, and Users.
+3. **Admin Scripts:** A suite of TypeScript tools for deployment, metadata setup, and rapid testing.
+
+## Key Features
+
+* **Soulbound Tickets:** Tickets are bound to the wallet (non-transferable/non-resellable), preventing black market scalping.
+* **Dynamic Evolution:** Ticket metadata "evolves" in real-time as users participate in activities (scanning codes at Booths).
+* **Shared Object Booths:** Ticket gates are shared objects, allowing thousands of users to check in simultaneously without network congestion.
+* **Burn-to-Mint:** Burn completed tickets to exchange them for a **Souvenir NFT** (tradable) and receive exclusive perks.
+* **Staff Dashboard:** Automatically syncs Booths from the blockchain without manual configuration.
 
 ---
 
-## 2. Cài đặt & Triển khai
+## 1. Project Structure
 
-### Bước 1: Deploy Smart Contract (Backend)
+* `contracts/`: Sui Move source code.
+* `stashpass.move`: The main module managing events, tickets, and booths.
 
-Đảm bảo bạn đã cài đặt **Sui CLI** và có số dư SUI (Testnet).
+
+* `web/`: User Interface (React + Vite + dApp Kit).
+* `admin-scripts/`: Tools for the Deployer/Admin.
+* `setup.ts`: Initializes the Event, creates Booths, and **automatically writes the configuration file for the Frontend**.
+* `setup-display.ts`: Configures NFT image rendering (Sui Object Display).
+* `make-me-admin.ts`: Transfers Admin rights (OrganizerCap) to another wallet.
+* `test-evolve.ts`, `test-refund.ts`: Scripts for testing business logic flows.
+
+
+
+---
+
+## 2. Installation & Deployment
+
+### Step 1: Deploy Smart Contract (Backend)
+
+Ensure you have the **Sui CLI** installed and have a SUI balance (Testnet).
 
 ```bash
 cd contracts
@@ -45,9 +48,9 @@ sui client publish --gas-budget 100000000 --skip-dependency-verification
 
 ```
 
-*Sau khi chạy xong, hãy copy **Package ID** từ terminal.*
+*After completion, copy the **Package ID** from the terminal.*
 
-### Bước 2: Cấu hình Script Quản trị
+### Step 2: Configure Admin Scripts
 
 ```bash
 cd ../admin-scripts
@@ -55,40 +58,40 @@ npm install
 
 ```
 
-Tạo file `.env` trong thư mục `admin-scripts/` và điền thông tin:
+Create a `.env` file in the `admin-scripts/` folder and fill in the details:
 
 ```env
-# Mạng lưới
+# Network
 SUI_NETWORK=testnet
 
-# 1. Package ID vừa deploy ở Bước 1
-SUI_PACKAGE_ID=0x... (Dán ID của bạn vào đây)
+# 1. Package ID deployed in Step 1
+SUI_PACKAGE_ID=0x... (Paste your ID here)
 
-# 2. Private Key của ví deployer (để chạy script setup)
-SUI_PRIVATE_KEY=suiprivkey... (hoặc 0x...)
+# 2. Private Key of the deployer wallet (to run setup scripts)
+SUI_PRIVATE_KEY=suiprivkey... (or 0x...)
 
-# 3. Địa chỉ kho bạc (nơi nhận phí 1%) - Có thể dùng địa chỉ ví của bạn
+# 3. Treasury Address (receives 1% fee) - Can be your wallet address
 SUI_PROTOCOL_TREASURY_ID=0x...
 
 ```
 
-### Bước 3: Chạy Script Khởi tạo (Quan trọng)
+### Step 3: Run Initialization Script (Important)
 
-Script này sẽ tạo Sự kiện, tạo các Booth mẫu, và **tự động tạo file `deployment.json**` cho Frontend.
+This script will create the Event, create sample Booths, and **automatically generate the `deployment.json**` file for the Frontend.
 
 ```bash
 npx ts-node setup.ts
 
 ```
 
-*(Tùy chọn)* Cài đặt hiển thị ảnh đẹp cho NFT:
+*(Optional)* Configure NFT display visuals:
 
 ```bash
 npx ts-node setup-display.ts
 
 ```
 
-### Bước 4: Khởi chạy Frontend (Web)
+### Step 4: Launch Frontend (Web)
 
 ```bash
 cd ../web
@@ -97,54 +100,54 @@ npm run dev
 
 ```
 
-Truy cập: `http://localhost:5173`
+Access: `http://localhost:5173`
 
 ---
 
-## 3. Hướng dẫn Sử dụng
+## 3. User Guide
 
-### A. Dành cho Admin (Organizer)
+### A. For Admin (Organizer)
 
-1. Kết nối ví Deployer vào Web App.
-2. Truy cập trang `/admin`.
-3. **Tạo Booth mới:** Nhập tên booth, chọn chế độ (Có huy hiệu hoặc Chỉ kiểm tra). Booth sẽ xuất hiện ngay lập tức trên toàn mạng lưới (Shared Object).
-4. **Cấu hình Phần thưởng:** Thêm quy tắc đổi quà (Ví dụ: Có huy hiệu "VIP" -> Giảm giá 50%).
-5. **Rút tiền (Cash Out):** Rút doanh thu bán vé về ví.
+1. Connect the Deployer wallet to the Web App.
+2. Navigate to the `/admin` page.
+3. **Create New Booth:** Enter booth name, select mode (Badge rewarding or Check-only). The Booth will appear immediately across the network (Shared Object).
+4. **Configure Rewards:** Add redemption rules (e.g., Have "VIP" badge -> 50% Discount).
+5. **Cash Out:** Withdraw ticket sales revenue to the wallet.
 
-### B. Dành cho Nhân viên (Staff Dashboard)
+### B. For Staff (Staff Dashboard)
 
-1. Truy cập trang `/staff`.
-2. Kết nối ví bất kỳ (Không cần quyền đặc biệt vì Booth là Shared Object).
-3. Hệ thống tự động tải danh sách các Booth hiện có.
-4. Chọn một Booth để hiện mã QR Check-in.
+1. Navigate to the `/staff` page.
+2. Connect any wallet (No special permissions needed as Booths are Shared Objects).
+3. The system automatically loads the list of existing Booths.
+4. Select a Booth to display the Check-in QR code.
 
-### C. Dành cho Người dùng (User Flow)
+### C. For Users (User Flow)
 
-1. **Mua vé:** Tại trang chủ, mua vé "General Admission".
-2. **Check-in:** Vào "My Tickets", bấm nút "Scan QR" và quét mã trên màn hình của Staff.
-3. **Tiến hóa:** Khi thu thập đủ huy hiệu, bấm "Evolve" để đốt vé và nhận Souvenir NFT.
+1. **Buy Ticket:** On the homepage, purchase a "General Admission" ticket.
+2. **Check-in:** Go to "My Tickets", click the "Scan QR" button, and scan the code on the Staff's screen.
+3. **Evolve:** Once enough badges are collected, click "Evolve" to burn the ticket and receive a Souvenir NFT.
 
 ---
 
-## 4. Các Script Tiện ích (CLI)
+## 4. Utility Scripts (CLI)
 
-Ngoài giao diện Web, bạn có thể dùng CLI để test nhanh:
+Aside from the Web UI, you can use the CLI for quick testing:
 
-* **Chuyển quyền Admin:**
+* **Transfer Admin Rights:**
 ```bash
-npx ts-node admin-scripts/make-me-admin.ts <DIA_CHI_VI_MOI>
+npx ts-node admin-scripts/make-me-admin.ts <NEW_WALLET_ADDRESS>
 
 ```
 
 
-* **Test luồng Tiến hóa (Evolve) không cần UI:**
+* **Test Evolution Flow (Evolve) without UI:**
 ```bash
 npx ts-node admin-scripts/test-evolve.ts
 
 ```
 
 
-* **Test luồng Hoàn tiền (Refund):**
+* **Test Refund Flow:**
 ```bash
 npx ts-node admin-scripts/test-refund.ts
 
@@ -154,8 +157,8 @@ npx ts-node admin-scripts/test-refund.ts
 
 ---
 
-## 5. Lưu ý Bảo mật
+## 5. Security Notes
 
-1. **Private Key:** Chỉ dùng Private Key trong `admin-scripts/.env` để chạy lệnh setup. **Frontend không bao giờ yêu cầu Private Key.**
-2. **Git:** File `.env` đã được thêm vào `.gitignore`. Tuyệt đối không commit file này lên GitHub.
-3. **Mạng:** Dự án mặc định chạy trên **Sui Testnet**. Hãy đảm bảo ví của bạn đang ở đúng mạng.
+1. **Private Key:** Only use the Private Key in `admin-scripts/.env` to run setup commands. **The Frontend never requests a Private Key.**
+2. **Git:** The `.env` file is included in `.gitignore`. Absolutely do not commit this file to GitHub.
+3. **Network:** The project defaults to **Sui Testnet**. Ensure your wallet is on the correct network.
