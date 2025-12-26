@@ -57,7 +57,7 @@ async function main() {
         options: { showContent: true }
     });
     
-    // ⚠️ FIXED: Strictly match Package ID to avoid using old Publishers
+    // Strictly match Package ID to avoid using old Publishers
     const publisherObj = owned.data.find((o: any) => {
         const fields = o.data?.content?.fields;
         return fields?.module_name === 'event_manager' && fields?.package === PACKAGE_ID;
