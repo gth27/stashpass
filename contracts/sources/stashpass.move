@@ -191,7 +191,7 @@ module stashpass::event_manager {
         transfer::public_transfer(refund, sender(ctx));
     }
 
-    // ✅ NEW: WITHDRAW FUNDS FUNCTION
+    // WITHDRAW FUNDS FUNCTION
     public fun withdraw_funds(
         cap: &OrganizerCap,
         machine: &mut TicketMachine,
