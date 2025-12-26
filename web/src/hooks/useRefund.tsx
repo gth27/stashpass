@@ -2,7 +2,6 @@ import { useSignAndExecuteTransaction } from '@mysten/dapp-kit';
 import { Transaction } from '@mysten/sui/transactions';
 import { CONFIG } from '../config';
 import toast from 'react-hot-toast';
-import React from 'react';
 
 export function useRefund() {
   const { mutate: signAndExecute } = useSignAndExecuteTransaction();

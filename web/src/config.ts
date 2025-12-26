@@ -9,6 +9,8 @@ export const CONFIG = {
   
   REWARD_CONFIG_ID: (deployment as any).REWARD_CONFIG_ID, 
   
+  ALL_BOOTH: [],
+
   TREASURY_ID: deployment.TREASURY_ID,
   DEMO_BOOTH_ID: deployment.DEMO_BOOTH_ID,
   TYPES: {

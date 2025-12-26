@@ -69,7 +69,7 @@ export default function MyTickets() {
                     <button onClick={closeScanner} className="text-gray-400 hover:text-white transition">✕</button>
                 </div>
                 <div className="aspect-square bg-black/50 rounded-xl overflow-hidden relative border border-white/10">
-                      <Scanner onScan={(result) => { if (result?.[0]?.rawValue) handleBoothScan(result[0].rawValue); }} allowMultiple={false} scanDelay={500} components={{ audio: false, onOff: false, finder: false }} styles={{ container: { width: '100%', height: '100%' } }} />
+                      <Scanner onScan={(result) => { if (result?.[0]?.rawValue) handleBoothScan(result[0].rawValue); }} allowMultiple={false} scanDelay={500} components={{ onOff: false, finder: false }} styles={{ container: { width: '100%', height: '100%' } }} />
                       <div className="absolute inset-0 animate-[scan_2s_ease-in-out_infinite] bg-gradient-to-b from-transparent via-brand/20 to-transparent h-[50%] -translate-y-full pointer-events-none"></div>
                 </div>
                 <p className="text-center text-xs text-gray-400 mt-6">Point your camera at the Booth's QR Code.</p>
