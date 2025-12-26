@@ -26,8 +26,6 @@ async function main() {
     
     let keypair;
     if (cleanKey.startsWith('suiprivkey')) {
-        // ... (Keep your existing Bech32 logic if needed, or just use base64) ...
-        // simplified for brevity, assuming standard setup:
         const { decodeSuiPrivateKey } = require('@mysten/sui.js/cryptography');
         const { secretKey } = decodeSuiPrivateKey(cleanKey);
         keypair = Ed25519Keypair.fromSecretKey(secretKey);
