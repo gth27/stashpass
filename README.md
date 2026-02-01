@@ -1,4 +1,5 @@
-
+# Archive notice
+This project will be archived starting 1/2/2026 as i don't have time to continue maintaining/working on it
 
 # StashPass – "Living Asset" Event Ticketing System on Sui
 
